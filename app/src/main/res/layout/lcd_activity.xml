@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+        >
+
+    <TextView
+            android:id="@+id/messageText"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            android:layout_gravity="center"
+            android:textSize="48sp"
+            android:layout_width="256dp"
+            android:layout_height="128dp"
+            />
+    <TextView
+            android:id="@+id/messageText2"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            android:layout_gravity="center"
+            android:layout_width="128dp"
+            android:layout_height="64dp"
+            />
+</FrameLayout>
