@@ -343,7 +343,7 @@ class SpiST9720(
         var charIndex = -1
         var row = -1
         var lastRowIndex = -1
-        while (charIndex < messageLength - 1 || row < 8) {
+        while (charIndex < messageLength - 1 && row < 7) {
             row++
             var pixelCount = 0
             while (charIndex < messageLength - 1 && pixelCount < 128) {
@@ -360,7 +360,7 @@ class SpiST9720(
             val startIndex = lastRowIndex + 1
             lastRowIndex = charIndex
             val charArray = message.substring(startIndex, startIndex + rowSize).toCharArray()
-            logMsg("row[$row, $rowSize] ${mGraphicsBuffer.position()} chars $charIndex $charArray")
+            logMsg("row[$row, $rowSize] ${mGraphicsBuffer.position()} chars $charIndex")
             val charsData = Array(rowSize) { SpiST9720.FONT6x8[charToFontIndex(charArray[it])] }
             val isSpaceCharArray = BooleanArray(rowSize) { charArray[it] == ' ' }
             if (charsData.isNotEmpty()) {
@@ -429,7 +429,7 @@ class SpiST9720(
 
     private fun showGraphicsBuffer() =
         mDevice?.apply {
-            //            logMsg("Showing Graphics buffer ${mGraphicsBuffer.position()} bytes")
+            logMsg("Showing Graphics buffer ${mGraphicsBuffer.position()} bytes")
             write(mGraphicsBuffer.array(), mGraphicsBuffer.position())
 //            setDelay(100)
         }

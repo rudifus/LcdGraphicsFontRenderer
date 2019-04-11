@@ -46,7 +46,9 @@ class SpiLcdActivity : AppCompatActivity() {
 //        mST9720.lcdClearGraphics()
 
 //        mST9720.show6x8Message(messageOrig)
-        mST9720.show6x8MessageCompacted2("mam sa velmi dobre a teraz budem mat velmi dlhy text na prekrytie skoro celej obrazovky, az taky dlhy, ze sa tu nezmesti")
+        mST9720.show6x8MessageCompacted2("mam sa velmi dobre a teraz budem mat velmi dlhy text na prekrytie skoro celej obrazovky, " +
+                "az taky dlhy, ze sa tu nezmesti. Ahoj, ako sa mas? Mam sa velmi dobre a ked budes citat tieto riadky este lepsie. Vyborne :)"
+        )
 //        mST9720.showCosinusWaveAnimated()
 
         Log.d(TAG, "Display screen activity created")
