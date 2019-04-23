@@ -3,15 +3,16 @@ package com.rudolas.mia.lcdst7920
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import java.io.IOException
-import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import com.google.android.things.contrib.driver.ssd1306.Ssd1306
 import com.google.android.things.pio.PeripheralManager
 import com.google.android.things.pio.SpiDevice
 import kotlinx.android.synthetic.main.lcd_activity.*
-import java.util.*
 
+class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnItemSelectedListener {
 
-class SpiLcdActivity : AppCompatActivity() {
     private var mDevice: SpiDevice? = null
 
     private lateinit var mST9720: SpiST9720
@@ -20,42 +21,68 @@ class SpiLcdActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.lcd_activity)
+        logMsg("Display screen activity created")
 
+        buttonClose.setOnClickListener(this)
         setupST7920SpiDisplay()
-        setupOledDisplay()
+//        setupOledDisplay()
 
-        mSsd1306.clearPixels()
-        val messageOrig = "Ahoj, ako sa mas? Mam sa velmi dobre a ked budes citat tieto riadky este lepsie. Vyborne :) A kolko riadkov dokaze clovek vtesnat na tento 128x64 pixelovy displejik"
-        val message = if (messageOrig.length > 128) messageOrig.substring(0, 128) else messageOrig
-        for (i in message.indices) {
-            showSsd1306FontChar(message[i], (i % 16) * 8, 8 * (i / 16))
-        }
+        fontsSpinner.adapter = ArrayAdapter<String>(
+            this,
+            R.layout.spinner_item,
+            R.id.spinnerFontText,
+            SpiST9720.fontsArray.map { it.name }.toList()
+        )
 
-        mSsd1306.show()
+        fontsSpinner.onItemSelectedListener = this
 
-//        mST9720.lcdSendCommand(1) // write begin
+//        mSsd1306.clearPixels()
+        val messageOrig =
+            "Ahoj, ako sa mas? Mam sa velmi dobre a ked budes citat tieto riadky este lepsie. Vyborne :) Adbxtra20px kolko riadkov dokaze clovek vtesnat na tento 128x64 pixelovy displejik"
+//        val message = if (messageOrig.length > 128) messageOrig.substring(0, 128) else messageOrig
+//        for (i in message.indices) {
+//            showSsd1306FontChar(message[i], (i % 16) * 8, 8 * (i / 16))
+//        }
+//
+//        mSsd1306.show()
+
+        if (false) {
+//            mST9720.lcdDisableGraphics()
+//            mST9720.lcdSendCommand(1) // write begin
 //        for(i in 0.. 3) {
 //            showLcdMessage("Ahoj$i", i, 0)
 //            showLcdMessage("Ako sa mas?", i, 2)
 //        }
+            showLcdMessage("Ahoj")
+        } else {
+            mST9720.lcdEnableGraphics()
 
-//        mST9720.lcdDisableGraphics()
-        mST9720.lcdEnableGraphics()
-        mST9720.lcdClearGraphics()
-//        mST9720.lcdFillGraphics()
-//        mST9720.lcdClearGraphics()
+            if (true) {
 
-//        mST9720.show6x8Message(messageOrig)
-        mST9720.show6x8MessageCompacted2("mam sa velmi dobre a teraz budem mat velmi dlhy text na prekrytie skoro celej obrazovky, " +
-                "az taky dlhy, ze sa tu nezmesti. Ahoj, ako sa mas? Mam sa velmi dobre a ked budes citat tieto riadky este lepsie. Vyborne :)"
-        )
-//        mST9720.showCosinusWaveAnimated()
-
-        Log.d(TAG, "Display screen activity created")
+//                mST9720.show6x8Message(messageOrig)
+//                show6x8MessageCompacted2(
+                showMessageCompacted3(
+                    ""
+//                    message1
+                )
+            } else {
+                mST9720.showCosinusWaveAnimated()
+            }
+        }
     }
 
     private fun delayMillis(millis: Int) {
         mST9720.delayMicroseconds(1000 * millis)
+    }
+
+    private fun show6x8MessageCompacted2(msg: String) {
+        mST9720.show6x8MessageCompacted2(msg)
+        messageText.text = msg
+    }
+
+    private fun showMessageCompacted3(msg: String) {
+        mST9720.renderGraphicsMessageCompacted3(msg)
+        messageText.text = msg
     }
 
     private fun showLcdMessage(msg: String) {
@@ -85,6 +112,13 @@ class SpiLcdActivity : AppCompatActivity() {
         }
     }
 
+    override fun onClick(view: View) {
+        when (view.id) {
+            R.id.buttonClose -> finish()
+            else -> logMsg("Not found case")
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         destroyAlphanumericDisplay()
@@ -95,14 +129,14 @@ class SpiLcdActivity : AppCompatActivity() {
         val manager = PeripheralManager.getInstance()
         val deviceList: List<String> = manager.i2cBusList
         if (deviceList.isEmpty()) {
-            Log.i(TAG, "No I2C bus available on this device.")
+            logInfo("No I2C bus available on this device.")
         } else {
-            Log.i(TAG, "List of available devices: $deviceList")
+            logInfo("List of available devices: $deviceList")
         }
         try {
             mSsd1306 = Ssd1306(I2C_BUS, 0x3C)
         } catch (e: IOException) {
-            Log.e(TAG, "Error while opening screen", e)
+            android.util.Log.e(TAG, "Error while opening OLED screen", e)
         }
     }
 
@@ -119,7 +153,7 @@ class SpiLcdActivity : AppCompatActivity() {
             PeripheralManager.getInstance()
                 .openSpiDevice(SPI_DEVICE_NAME)
         } catch (e: IOException) {
-            Log.w(TAG, "Unable to access SPI device", e)
+            logWarn("Unable to access SPI device", e)
             null
         }
 
@@ -134,26 +168,41 @@ class SpiLcdActivity : AppCompatActivity() {
             setBitsPerWord(8)
             setBitJustification(SpiDevice.BIT_JUSTIFICATION_MSB_FIRST)
             mST9720 = SpiST9720(this)
+            messageText.text = getString(R.string.init)
             mST9720.init()
         }
+    }
+
+    override fun onNothingSelected(parent: AdapterView<*>?) {
+        logMsg("Spinner onNothingSelected")
+    }
+
+    override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+        logMsg("Spinner onItemSelected [$position] ${parent.getItemAtPosition(position)}")
+//        mST9720.selectFont(parent.getItemAtPosition(position) as String)
+        fontsSpinner.postDelayed(
+            {fontsSpinner.setSelection((position + 1) % 23)},
+            3000
+        )
+        mST9720.showFontDemoScreen(parent.getItemAtPosition(position) as String, message1)
     }
 
     private fun destroyOledDisplay() {
         try {
             mSsd1306.close()
         } catch (e: IOException) {
-            Log.w(TAG, "Error closing SSD1306", e)
+            logWarn("Error closing SSD1306", e)
         }
     }
 
     private fun destroyAlphanumericDisplay() {
-        Log.i(TAG, "Closing display")
+        logInfo("Closing display")
 
         try {
             mDevice?.close()
             mDevice = null
         } catch (e: IOException) {
-            Log.w(TAG, "Unable to close SPI device", e)
+            android.util.Log.w(TAG, "Unable to close SPI device", e)
         }
     }
 
@@ -161,7 +210,12 @@ class SpiLcdActivity : AppCompatActivity() {
         private val TAG = SpiLcdActivity::class.java.simpleName
         private const val SPI_DEVICE_NAME = "SPI3.0"
         private const val I2C_BUS = "I2C1"
+        private const val message1 = "¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħĨĩĪīĬĭĮįİ" +
+                        "ıĲĳĴĵĶķĸĹĺĻļĽľĿŀŁłŃńŅņŇňŉŊŋŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽž"
+        private const val message = "Žiadny príklad by nebol krajší, než takýto krásny text s dĺžňami a mäkčeňmi rýdzo po slovensky."
 
         private fun logMsg(msg: String) = android.util.Log.d(TAG, "LCD $msg")
+        private fun logInfo(msg: String) = android.util.Log.i(TAG, "LCD $msg")
+        private fun logWarn(msg: String, t: Throwable) = android.util.Log.w(TAG, "LCD $msg", t)
     }
 }

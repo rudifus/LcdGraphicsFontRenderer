@@ -1,14 +1,19 @@
 package com.rudolas.mia.lcdst7920
 
 import com.google.android.things.pio.SpiDevice
+import com.rudolas.mia.lcdst7920.fonts.*
 import java.lang.Math.cos
+import java.lang.StringBuilder
 import java.nio.ByteBuffer
+import java.text.Normalizer
 import kotlin.math.PI
+import kotlin.math.max
 
 class SpiST9720(
     private val mDevice: SpiDevice?
 ) {
 
+    private var actFontItemIndex: Int = 0
     private var mDataBuffer: ByteBuffer = ByteBuffer.allocate(DATA_BYTES_SIZE)
     private var mGraphicsBuffer: ByteBuffer = ByteBuffer.allocate(DATA_BYTES_SIZE * (ROW_CHARS_21 + 2) * 64)
 
@@ -53,11 +58,13 @@ class SpiST9720(
 
 //        lcdSendCommand(0b00001100)
         lcdDisplayStatus(display_on = true, cursor_on = false, blink_on = false)
+
 //        lcdSetDDRamAddress(0)
 //        lcdSendCommand(0b10000000)
-        lcdClear()
-        mDevice?.setCsChange(true)
+
 //        lcdSendCommand(0b00000001)
+        lcdClear()
+//        mDevice?.setCsChange(true)
     }
 
     fun lcdEnableGraphics() {
@@ -131,7 +138,7 @@ class SpiST9720(
         showGraphicsBuffer()
     }
 
-    private fun lcdSetDDRamAddress(address: Int) = lcdSendData(128 or (address and 63))
+    private fun lcdSetDDRamAddress(address: Int) = lcdSendCommand(128 or (address and 63))
 
     private fun lcdWriteMessage(message: String) {
         for (i in 0 until message.length) {
@@ -240,16 +247,18 @@ class SpiST9720(
      * Likely the most efficient rendering and whole screen refresh
      */
     fun show6x8Message(message: String) {
-        val screenMessage = if (message.length > SCREEN_CHARS_128) message.substring(0, SCREEN_CHARS_128) else message
+        val screenMessage1 = if (message.length > SCREEN_CHARS_128) message.substring(0, SCREEN_CHARS_128) else message
+        val screenMessage =
+            Normalizer.normalize(screenMessage1, Normalizer.Form.NFD).replace("[^\\p{ASCII}]".toRegex(), "")
         val messageLength = screenMessage.length
         val rowsCount = messageLength / ROW_CHARS_16
         mGraphicsBuffer.rewind()
 
         // write each row separately
 //        for (row in 0 .. rowsCount) {
-//            val rowSize = if (row == rowsCount) msg.length % ROW_CHARS_16 else ROW_CHARS_16
+//            val rowSize = if (row == rowsCount) messageLength % ROW_CHARS_16 else ROW_CHARS_16
 //            val startIndex = row * ROW_CHARS_16
-//            val charArray = msg.substring(startIndex, startIndex + rowSize).toCharArray()
+//            val charArray = screenMessage.substring(startIndex, startIndex + rowSize).toCharArray()
 //            for (i in 0 until charArray.size step 2) {
 //                showFontChars(charArray[i], if (i < charArray.size - 1) charArray[i + 1] else ' ', row , i / 2)
 //            }
@@ -261,7 +270,7 @@ class SpiST9720(
             val rowSize = if (isLastRow) messageLength % ROW_CHARS_16 else ROW_CHARS_16
             val startIndex = row * ROW_CHARS_16
             val charArray = screenMessage.substring(startIndex, startIndex + rowSize).toCharArray()
-            val charsData = Array(rowSize) { SpiST9720.FONT6x8[charToFontIndex(charArray[it])] }
+            val charsData = Array(rowSize) { FONT6x8[charToFontIndex(charArray[it])] }
             if (charsData.isNotEmpty()) {
                 logMsg("row[$row, $rowSize] ${mGraphicsBuffer.position()} ${charsData.size} ${charsData[0].size}")
                 val rowOffset = 0x80 or ((row * 8) % 32)
@@ -292,7 +301,7 @@ class SpiST9720(
             val rowSize = if (isLastRow) messageLength % ROW_CHARS_21 else ROW_CHARS_21
             val startIndex = row * ROW_CHARS_21
             val charArray = screenMessage.substring(startIndex, startIndex + rowSize).toCharArray()
-            val charsData = Array(rowSize) { SpiST9720.FONT6x8[charToFontIndex(charArray[it])] }
+            val charsData = Array(rowSize) { FONT6x8[charToFontIndex(charArray[it])] }
             if (charsData.isNotEmpty()) {
                 logMsg("row[$row, $rowSize] ${mGraphicsBuffer.position()} ${charsData.size} ${charsData[0].size}")
                 val rowOffset = 0x80 or ((row * 8) % 32)
@@ -336,8 +345,10 @@ class SpiST9720(
         showGraphicsBuffer()
     }
 
-    fun show6x8MessageCompacted2(message: String) {
+    fun show6x8MessageCompacted2(message1: String) {
+        val message = Normalizer.normalize(message1, Normalizer.Form.NFD).replace("[^\\p{ASCII}]".toRegex(), "")
         val messageLength = message.length
+
         mGraphicsBuffer.rewind()
 
         var charIndex = -1
@@ -348,8 +359,9 @@ class SpiST9720(
             var pixelCount = 0
             while (charIndex < messageLength - 1 && pixelCount < 128) {
                 val char = message[charIndex + 1]
+//                val widths = FONT_LED_CALCULATOR_20PX_WIDTH[charIndex + 1]
                 val charPixels = if (char == ' ') 3 else 6
-                logMsg("pixels[$row, ${charIndex + 1}] '$char' $pixelCount $charPixels")
+                logMsg("pixels[$row, ${charIndex + 1}] '$char' Pixels $pixelCount $charPixels")
                 if (pixelCount + charPixels > 128) {
                     break
                 }
@@ -361,7 +373,7 @@ class SpiST9720(
             lastRowIndex = charIndex
             val charArray = message.substring(startIndex, startIndex + rowSize).toCharArray()
             logMsg("row[$row, $rowSize] ${mGraphicsBuffer.position()} chars $charIndex")
-            val charsData = Array(rowSize) { SpiST9720.FONT6x8[charToFontIndex(charArray[it])] }
+            val charsData = Array(rowSize) { FONT6x8[charToFontIndex(charArray[it])] }
             val isSpaceCharArray = BooleanArray(rowSize) { charArray[it] == ' ' }
             if (charsData.isNotEmpty()) {
                 val rowOffset = 0x80 or ((row * 8) % 32)
@@ -409,13 +421,124 @@ class SpiST9720(
         showGraphicsBuffer()
     }
 
+    fun showFontDemoScreen(demoFont:String, message: String) {
+        lcdClearGraphics()
+        mGraphicsBuffer.rewind()
+        selectFont(Monobit16px.font.name)
+//        selectFont(LedCalculator20px.font.name)
+        val headerFontHeight = getFontData(' ').size
+        renderGraphicsMessageCompacted3(demoFont)
+
+        selectFont(demoFont)
+        renderGraphicsMessageCompacted3(message, headerFontHeight)
+        showGraphicsBuffer()
+    }
+
+    fun showFullScreenMessage(message: String) {
+        lcdClearGraphics()
+        mGraphicsBuffer.rewind()
+        renderGraphicsMessageCompacted3(message)
+        showGraphicsBuffer()
+    }
+
+    /**
+     * show message,
+     */
+    fun renderGraphicsMessageCompacted3(message: String, rowOffset: Int = 0) {
+
+        var charIndex = -1
+        var rowIndex = rowOffset
+        var lastRowEndCharIndex = -1
+        val messageLength = message.length
+        while (charIndex < messageLength - 1 && rowIndex < 63) {
+            var pixelCount = 0
+            val widths = arrayListOf<Int>()
+            while (charIndex < messageLength - 1 && pixelCount < 128) {
+                val char = message[charIndex + 1]
+                val charPixelsWidth = getFontDataWidth(char)
+                widths.add(charPixelsWidth)
+                logMsg("pixels[$rowIndex, ${charIndex + 1}] '$char' dataIndex ${charToFontIndex(char)} $pixelCount Pixels $charPixelsWidth")
+                if (pixelCount + charPixelsWidth > 128) {
+                    break
+                }
+                pixelCount += charPixelsWidth
+                charIndex++
+            }
+            val rowSize = charIndex - lastRowEndCharIndex
+            val startIndex = lastRowEndCharIndex + 1
+            lastRowEndCharIndex = charIndex
+            val charArray = message.substring(startIndex, startIndex + rowSize).toCharArray()
+            logMsg("row[$rowIndex, $charIndex] ${mGraphicsBuffer.position()} chars $rowSize")
+            val charsData = Array(rowSize) { getFontData(charArray[it]) }
+//            val isSpaceCharArray = BooleanArray(rowSize) { charArray[it] == ' ' }
+            if (charsData.isNotEmpty()) {
+                val rowPixels = IntArray(128)  // pixels per row
+                val rowCharWidths = widths.toTypedArray()
+                val charDataHeight = charsData[0].size
+                logMsg("row[$rowIndex, $startIndex] $rowSize chars Height ${charDataHeight}px")
+                for (i in charsData[0].indices) {
+                    val actRowIndex = rowIndex + i
+                    if (actRowIndex > 63) {
+                        break
+                    }
+                    val cmd = if (actRowIndex < 32) 0x80 else 0x88
+//                    lcdSendCommand(0x80 or (actRowIndex % 32))
+//                    lcdSendCommand(cmd)
+                    lcdAppendGraphicsCommand(0x80 or (actRowIndex % 32))   // Vertical coordinate of the screen is specified first. (0-31)
+                    lcdAppendGraphicsCommand(cmd)   // Then horizontal coordinate of the screen is specified. (0-8)
+                    if (i > 0) {
+                        rowPixels.fill(0)
+                    }
+                    var pos = 0
+                    for (rowCharIndex in charsData.indices) {
+                        if (charsData[rowCharIndex].isEmpty()) {
+//                            pos += 3
+                            continue
+                        }
+//                        logMsg("FONT ${charArray[rowCharIndex]} ${charsData[rowCharIndex].size} ")
+                        val fontChar = charsData[rowCharIndex][i]
+                        val charDataWidth = rowCharWidths[rowCharIndex]
+//                        if (i == 0) {
+//                            logMsg("data[$rowCharIndex] '${charArray[rowCharIndex]}' $charDataWidth pixels")
+////                            logMsg("data[$rowCharIndex] data $fontChar of $charDataWidth pixels for ${charArray[rowCharIndex]}")
+//                        }
+                        for (k in 0 until charDataWidth) {
+                            rowPixels[pos + k] = if (1 shl (charDataWidth - k - 1) and fontChar != 0) 1 else 0
+//                            logMsg("[$i, $rowCharIndex] ${pos + k} ${rowPixels[pos + k]}")
+                        }
+                        pos += charDataWidth
+                    }
+                    val strBuilder = StringBuilder(128)
+                    for (pixel in rowPixels) {
+                        strBuilder.append(pixel.toString())
+                    }
+                    logMsg("data[$actRowIndex of $rowSize] ${String(charArray)} $strBuilder")
+                    strBuilder.clear()
+
+                    // write rowPixels array into graphics buffer
+                    for (p in 0 until ROW_CHARS_16) {
+                        val idx = p * 8 // compacted char pixels position
+                        var rowByte = 0
+                        for (k in 0..7) {
+                            rowByte += (rowPixels[idx + k] shl (7 - k))
+                        }
+                        // send data to coordinate
+                        lcdAppendGraphicsData(rowByte)
+//                        lcdSendData(rowByte)
+                    }
+                }
+                rowIndex += charDataHeight
+            }
+        }
+    }
+
     /**
      * show text bytes for 6x8 font, in each text row by 2 chars,
      * leads to slower rendering
      */
     private fun showFontChars(char1: Char, char2: Char, row: Int, column: Int) {
-        val char1Data = SpiST9720.FONT6x8[charToFontIndex(char1)]
-        val char2Data = SpiST9720.FONT6x8[charToFontIndex(char2)]
+        val char1Data = FONT6x8[charToFontIndex(char1)]
+        val char2Data = FONT6x8[charToFontIndex(char2)]
         logMsg("Chars row[$row, 0] ${mGraphicsBuffer.position()}")
         for (i in char1Data.indices) {
             lcdSendCommand(0x80 or (i + (row * 8) % 32))   // Vertical coordinate of the screen is specified first. (0-31)
@@ -424,8 +547,6 @@ class SpiST9720(
             lcdSendData(char2Data[i])
         }
     }
-
-    private fun charToFontIndex(char: Char) = char.toInt() - 32
 
     private fun showGraphicsBuffer() =
         mDevice?.apply {
@@ -476,6 +597,19 @@ class SpiST9720(
         }
     }
 
+    fun selectFont(name: String) {
+        actFontItemIndex = max(0, fontsArray.indexOfFirst { it.name == name })
+    }
+
+    fun getFontByIndex(index: Int) = fontsArray[index]
+
+    fun getFontDataWidth(char: Char): Int = getFontData(char, dataType = FONT_DATA_WIDTH)[0]
+
+    private fun getFontData(char: Char, dataType: Int = FONT_DATA): IntArray = when (dataType) {
+        FONT_DATA_WIDTH -> intArrayOf(fontsArray[actFontItemIndex].widths[charToFontIndex(char)])
+        else -> fontsArray[actFontItemIndex].charBytes[charToFontIndex(char)]
+    }
+
     companion object {
         private val TAG = SpiST9720::class.java.simpleName
         private const val DATA_BYTES_SIZE = 3
@@ -521,7 +655,7 @@ class SpiST9720(
             intArrayOf(0x40, 0x20, 0x10, 0x08, 0x10, 0x20, 0x40, 0x00), // >
             intArrayOf(0x70, 0x88, 0x08, 0x30, 0x20, 0x00, 0x20, 0x00), // ?
             intArrayOf(0x70, 0x88, 0xA8, 0xB8, 0xB0, 0x80, 0x78, 0x00), // @ 0x40   64
-            intArrayOf(0x20, 0x50, 0x88, 0x88, 0xF8, 0x88, 0x88, 0x00), // A     65
+            intArrayOf(0x20, 0x50, 0x88, 0x88, 0xF8, 0x88, 0x88, 0x00), // Adbxtra20px     65
             intArrayOf(0xF0, 0x88, 0x88, 0xF0, 0x88, 0x88, 0xF0, 0x00), // B
             intArrayOf(0x70, 0x88, 0x80, 0x80, 0x80, 0x88, 0x70, 0x00), // C
             intArrayOf(0xF0, 0x88, 0x88, 0x88, 0x88, 0x88, 0xF0, 0x00), // D
@@ -583,9 +717,135 @@ class SpiST9720(
             intArrayOf(0x20, 0x20, 0x20, 0x00, 0x20, 0x20, 0x20, 0x00), // |
             intArrayOf(0x40, 0x20, 0x20, 0x10, 0x20, 0x20, 0x40, 0x00), // }
             intArrayOf(0x40, 0xA8, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00), // ~
-            intArrayOf(0x70, 0xD8, 0xD8, 0x70, 0x00, 0x00, 0x00, 0x00)  // DEL
+            intArrayOf(0x70, 0xD8, 0xD8, 0x70, 0x00, 0x00, 0x00, 0x00) // DEL
         )
 
+        val fontsArray: Array<FontItem> = arrayOf(
+//            Bncuword27px.font,
+//            Clacon41px.font,
+//            Code7x548px.font,
+//            DavidSansCondensed56px.font,
+//            Display40px.font,
+//            Everyday41px.font,
+
+            // PERFECT
+            LedCalculator20px.font,  // very good
+            Nds1210px.font,  // perfect
+            EnterCommand16px.font,  // very good
+            MixSerifCondense16px.font, // tall condensed, good
+            Mousetrap210px.font,  // small very good
+            Monobit16px.font,  // small perfect
+            PixelOperator88px.font,  // small very good
+            PixelOperatorMono88px.font,  // small very good
+            Font2a03Memesbruh0316px.font, // very good, squared
+            EnterCommand16px.font, // very good, perfect
+            Graph35Pix8px.font,  // very good, not tall, compact. mono space 6x7
+            AmericanCursive16px.font,  // very good
+            CyborgSister16px.font, // very good
+            AerxTabs16px.font,  //very good
+            Font712Serif16px.font,   // very good
+            BabyBlue16px.font,   // big and OK
+            HeyText16px.font,  // small and very good
+            Igiari16px.font, // large
+            Optixal16px.font,  // very good
+            PfRondaSeven16px.font,  // quite big
+            PixelOperator16px.font,  // very good
+            PixelOperatorMono16px.font,  // very good
+            Uni05538px.font  // small sold
+
+
+            // TO NORMALIZE
+//            EndlessType8px.font,  // basic chars only
+//            Addwb18px.font,  // basic chars only
+//            Adbxtra20px.font,  // basic chars only
+//            AdvancedPixel7px20.font,  // basic chars only
+//            AerxFont16px.font,  // basic chars only
+//            AlterebroPixelFont16px.font,  // basic chars only
+//            AngieAtore16px.font, // basic chars only
+//            CharriotDeluxe10px.font,  // basic chars only
+//            ClassicMemesbruh0316px.font,  // basic chars only
+//            Font8BitFortress7px.font,  // basic chars only
+//            HelloWorld13px.font,  // basic chars only
+//            Mmbnthin32px.font,  // basic chars only
+//            Monaco32px.font,  // basic chars only
+//            Mosarg16px.font,  // basic chars only
+//            Nano10px.font,  // basic chars only
+//            NdsbiosMemesbruh0316px.font,  // basic chars only
+//            OldSchoolAdventures7px.font,  // basic chars only
+//            Pixur16px.font,  // basic chars only
+//            PixL20px.font,  // basic chars only
+//            Plastica16px.font,  // basic chars only
+//            Poco10px.font,  // small very good
+//            ProggyTiny16px.font,  // basic chars only
+//            Pxl10px.font,  // quite small
+//            Redensek13px.font,  // basic chars only
+//            Resource16px.font,  // basic chars only
+//            RevMiniPixel8px.font,  // basic chars only
+//            Rix8px.font,  // basic chars only
+//            RsehandWritingPixel20px.font,  // basic chars only
+//            RootSquare20px.font,  // basic chars only
+//            Savior116px.font,  // basic chars only
+//            Scifibit16px.font,  // basic chars only big
+//            SevastopolInterface16px.font,  // basic chars only
+//            Sgk07516px.font,  // basic chars only
+//            SillyPixel8px.font,  // basic chars only - ultra smLL
+//            Techkr25px.font,  // basic chars only
+//            ThinPixel720px.font,  // basic chars only - thin
+//            TinyUnicode16px.font,  // basic chars only
+//            TlozPhantomHourglass16px.font,  // basic chars only
+//            Volter28Goldfish299px.font,  // basic chars only
+//            ZeptoRegular8px.font,  // basic chars only - small
+
+//            PxSansNouveaux10px.font,  // bad
+//            Font15x516px.font,  // not good
+//            Bmhaa30px.font,  // big
+//            Font7x524px.font,  // big
+//            FreePixel16px.font,  // bed chars
+//            Homespun20px.font,  // big
+//            LilliputSteps16px.font, // bad
+//            Mojangregular24px.font,  // big
+//            MonotypeGerhilt8px.font,  // bad
+//            Notalot2516px.font,  // bad
+//            Px1014px.font, //  bad
+//            RClassic88px.font,  // bad
+//            RntgLarger21px.font,  // big
+//            Tiny30px.font,  // big
+//            Bitdust28px.font,  // big
+//            Bitlow28px.font  // big
+        )
+
+        private const val FONT_DATA = 0
+        private const val FONT_DATA_WIDTH = 1
+
+        //    private fun charToFontIndex(char: Char) = char.toInt() - 32
+        private fun charToFontIndex(char: Char) = char.toInt().let { if (it > 130) it - 66 else it - 32 }
+
         private fun logMsg(msg: String) = android.util.Log.d(TAG, "LCD $msg")
+
+        data class FontItem(
+            var name: String,
+            var charBytes: Array<IntArray>,
+            var widths: IntArray
+        ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as FontItem
+
+                if (name != other.name) return false
+                if (!widths.contentEquals(other.widths)) return false
+                if (!charBytes.contentDeepEquals(other.charBytes)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = name.hashCode()
+                result = 31 * result + widths.contentHashCode()
+                result = 31 * result + charBytes.contentDeepHashCode()
+                return result
+            }
+        }
     }
 }
