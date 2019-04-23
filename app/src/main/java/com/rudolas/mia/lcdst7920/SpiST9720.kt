@@ -421,7 +421,7 @@ class SpiST9720(
         showGraphicsBuffer()
     }
 
-    fun showFontDemoScreen(demoFont:String, message: String) {
+    fun showFontDemoScreen(demoFont: String, message: String) {
         lcdClearGraphics()
         mGraphicsBuffer.rewind()
         selectFont(Monobit16px.font.name)
@@ -548,12 +548,13 @@ class SpiST9720(
         }
     }
 
-    private fun showGraphicsBuffer() =
+    private fun showGraphicsBuffer() {
         mDevice?.apply {
             logMsg("Showing Graphics buffer ${mGraphicsBuffer.position()} bytes")
             write(mGraphicsBuffer.array(), mGraphicsBuffer.position())
 //            setDelay(100)
         }
+    }
 
     fun showCosinusWaveAnimated() {
         val cosArray = IntArray(131)

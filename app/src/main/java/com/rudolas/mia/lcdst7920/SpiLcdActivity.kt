@@ -37,8 +37,8 @@ class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.On
         fontsSpinner.onItemSelectedListener = this
 
 //        mSsd1306.clearPixels()
-        val messageOrig =
-            "Ahoj, ako sa mas? Mam sa velmi dobre a ked budes citat tieto riadky este lepsie. Vyborne :) Adbxtra20px kolko riadkov dokaze clovek vtesnat na tento 128x64 pixelovy displejik"
+//        val messageOrig =
+//            "Ahoj, ako sa mas? Mam sa velmi dobre a ked budes citat tieto riadky este lepsie. Vyborne :) Adbxtra20px kolko riadkov dokaze clovek vtesnat na tento 128x64 pixelovy displejik"
 //        val message = if (messageOrig.length > 128) messageOrig.substring(0, 128) else messageOrig
 //        for (i in message.indices) {
 //            showSsd1306FontChar(message[i], (i % 16) * 8, 8 * (i / 16))
