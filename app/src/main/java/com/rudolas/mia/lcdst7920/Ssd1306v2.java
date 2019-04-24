@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import com.google.android.things.contrib.driver.ssd1306.BitmapHelper;
 import com.google.android.things.pio.I2cDevice;
 import com.google.android.things.pio.PeripheralManager;
-import com.rudolas.mia.lcdst7920.fonts.*;
+import com.rudolas.mia.fonts.*;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -13,16 +13,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Driver for controlling the SSD1306 OLED display.
+ * Driver for controlling the SSD1306 OLED display. With extended latin characters accents & diacritics fonts rendering.
  */
 public class Ssd1306v2 implements Closeable {
     private static final String TAG = "Ssd1306v2";
     private static final int FONT_DATA = 0;
     private static final int FONT_DATA_WIDTH = 1;
-    public static final SpiST9720.Companion.FontItem[] FONTS_ARRAY;
+    public static final FontItem[] FONTS_ARRAY;
 
     static {
-        FONTS_ARRAY = new SpiST9720.Companion.FontItem[]{
+        FONTS_ARRAY = new FontItem[]{
                 // PERFECT
                 LedCalculator20px.Companion.getFont(),  // very good
                 Nds1210px.Companion.getFont(),  // perfect
@@ -312,7 +312,7 @@ public class Ssd1306v2 implements Closeable {
     }
 
     public final void selectFont( String name) {
-        final SpiST9720.Companion.FontItem[] fonts = FONTS_ARRAY;
+        final FontItem[] fonts = FONTS_ARRAY;
         int index = 0;
         final int fontsCount = fonts.length;
 
@@ -533,6 +533,6 @@ public class Ssd1306v2 implements Closeable {
     }
 
     private static void logMsg(String msg) {
-        android.util.Log.d("Ssd1306v2", msg);
+        android.util.Log.d(TAG, msg);
     }
 }

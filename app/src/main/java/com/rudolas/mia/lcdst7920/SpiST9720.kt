@@ -1,7 +1,7 @@
 package com.rudolas.mia.lcdst7920
 
 import com.google.android.things.pio.SpiDevice
-import com.rudolas.mia.lcdst7920.fonts.*
+import com.rudolas.mia.fonts.*
 import java.lang.Math.cos
 import java.lang.StringBuilder
 import java.nio.ByteBuffer
@@ -9,6 +9,9 @@ import java.text.Normalizer
 import kotlin.math.PI
 import kotlin.math.max
 
+/**
+ *
+ */
 class SpiST9720(
     private val mDevice: SpiDevice?
 ) {
@@ -822,31 +825,5 @@ class SpiST9720(
         private fun charToFontIndex(char: Char) = char.toInt().let { if (it > 130) it - 66 else it - 32 }
 
         private fun logMsg(msg: String) = android.util.Log.d(TAG, "LCD $msg")
-
-        data class FontItem(
-            var name: String,
-            var charBytes: Array<IntArray>,
-            var widths: IntArray
-        ) {
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (javaClass != other?.javaClass) return false
-
-                other as FontItem
-
-                if (name != other.name) return false
-                if (!widths.contentEquals(other.widths)) return false
-                if (!charBytes.contentDeepEquals(other.charBytes)) return false
-
-                return true
-            }
-
-            override fun hashCode(): Int {
-                var result = name.hashCode()
-                result = 31 * result + widths.contentHashCode()
-                result = 31 * result + charBytes.contentDeepHashCode()
-                return result
-            }
-        }
     }
 }
