@@ -30,7 +30,7 @@ data class FontItem(
 
     companion object {
         /**
-         * sample font item usage template - so that with no content
+         * sample font item usage template - therefore with no content
          */
         val font = FontItem(
             "",
