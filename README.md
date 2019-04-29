@@ -24,5 +24,5 @@ Font | Font Size | Preview
 [Pixel Operator 8](app/src/main/java/com/rudolas/mia/fonts/PixelOperator88px.java) | 8px | ![Screenshot](/Screenshots/PixelOperator8_1res.webp?raw=true)
 [Pixel Operator Mono 8](app/src/main/java/com/rudolas/mia/fonts/PixelOperatorMono88px.java) | 8px | ![Screenshot](/Screenshots/PixelOperatorMono8_1res.webp?raw=true)
 [Pixel Operator](app/src/main/java/com/rudolas/mia/fonts/PixelOperator16px.java) | 16px | ![Screenshot](/Screenshots/PixelOperator_1res.webp?raw=true)
-[Uni 05 53](app/src/main/java/com/rudolas/mia/fonts/Uni05538px.java) | 16px | ![Screenshot](/Screenshots/Uni05_53_1res.webp?raw=true
+[Uni 05 53](app/src/main/java/com/rudolas/mia/fonts/Uni05538px.java) | 16px | ![Screenshot](/Screenshots/Uni05_53_1res.webp?raw=true)
 <!-- FONTS_LIST_END -->
