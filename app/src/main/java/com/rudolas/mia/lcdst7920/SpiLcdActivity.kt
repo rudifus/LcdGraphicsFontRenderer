@@ -15,7 +15,7 @@ class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.On
 
     private var mDevice: SpiDevice? = null
 
-    private lateinit var mST9720: SpiST9720
+    private lateinit var mST7920: SpiST7920
     private lateinit var mSsd1306: Ssd1306
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +31,7 @@ class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.On
             this,
             R.layout.spinner_item,
             R.id.spinnerFontText,
-            SpiST9720.fontsArray.map { it.name }.toList()
+            SpiST7920.fontsArray.map { it.name }.toList()
         )
 
         fontsSpinner.onItemSelectedListener = this
@@ -47,56 +47,56 @@ class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.On
 //        mSsd1306.show()
 
         if (false) {
-//            mST9720.lcdDisableGraphics()
-//            mST9720.lcdSendCommand(1) // write begin
+//            mST7920.lcdDisableGraphics()
+//            mST7920.lcdSendCommand(1) // write begin
 //        for(i in 0.. 3) {
 //            showLcdMessage("Ahoj$i", i, 0)
 //            showLcdMessage("Ako sa mas?", i, 2)
 //        }
             showLcdMessage("Ahoj")
         } else {
-            mST9720.lcdEnableGraphics()
+            mST7920.lcdEnableGraphics()
 
             if (true) {
 
-//                mST9720.show6x8Message(messageOrig)
+//                mST7920.show6x8Message(messageOrig)
 //                show6x8MessageCompacted2(
                 showMessageCompacted3(
                     ""
 //                    message1
                 )
             } else {
-                mST9720.showCosinusWaveAnimated()
+                mST7920.showCosinusWaveAnimated()
             }
         }
     }
 
     private fun delayMillis(millis: Int) {
-        mST9720.delayMicroseconds(1000 * millis)
+        mST7920.delayMicroseconds(1000 * millis)
     }
 
     private fun show6x8MessageCompacted2(msg: String) {
-        mST9720.show6x8MessageCompacted2(msg)
+        mST7920.show6x8MessageCompacted2(msg)
         messageText.text = msg
     }
 
     private fun showMessageCompacted3(msg: String) {
-        mST9720.renderGraphicsMessageCompacted3(msg)
+        mST7920.renderGraphicsMessageCompacted3(msg)
         messageText.text = msg
     }
 
     private fun showLcdMessage(msg: String) {
-        mST9720.sendMessage(msg)
+        mST7920.sendMessage(msg)
         messageText.text = msg
     }
 
     private fun showLcdMessage(msg: String, row: Int, column: Int) {
-        mST9720.sendMessage(msg, row, column)
+        mST7920.sendMessage(msg, row, column)
         messageText.text = msg
     }
 
     private fun showSsd1306FontChar(char: Char, offsetX: Int, offsetY: Int) {
-        val char1Array = SpiST9720.FONT6x8[char.toInt() - 32]
+        val char1Array = SpiST7920.FONT6x8[char.toInt() - 32]
         for (i in char1Array.indices) {
             val hex = char1Array[i]
 //            logMsg("char [$char] $i")
@@ -167,9 +167,9 @@ class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.On
 //            setFrequency(16000000)
             setBitsPerWord(8)
             setBitJustification(SpiDevice.BIT_JUSTIFICATION_MSB_FIRST)
-            mST9720 = SpiST9720(this)
+            mST7920 = SpiST7920(this)
             messageText.text = getString(R.string.init)
-            mST9720.init()
+            mST7920.init()
         }
     }
 
@@ -179,12 +179,12 @@ class SpiLcdActivity : AppCompatActivity(), View.OnClickListener, AdapterView.On
 
     override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
         logMsg("Spinner onItemSelected [$position] ${parent.getItemAtPosition(position)}")
-//        mST9720.selectFont(parent.getItemAtPosition(position) as String)
+//        mST7920.selectFont(parent.getItemAtPosition(position) as String)
         fontsSpinner.postDelayed(
             {fontsSpinner.setSelection((position + 1) % 23)},
             3000
         )
-        mST9720.showFontDemoScreen(parent.getItemAtPosition(position) as String, message1)
+        mST7920.showFontDemoScreen(parent.getItemAtPosition(position) as String, message1)
     }
 
     private fun destroyOledDisplay() {

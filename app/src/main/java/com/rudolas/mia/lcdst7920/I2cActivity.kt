@@ -75,7 +75,7 @@ class I2cActivity : AppCompatActivity() {
     }
 
     private fun showFontChar(char: Char, offsetX: Int, offsetY: Int) {
-        val char1Array = SpiST9720.FONT6x8[char.toInt() - 32] //
+        val char1Array = SpiST7920.FONT6x8[char.toInt() - 32] //
         for (i in char1Array.indices) {
             val hex = char1Array[i]
             logMsg("char [$char] $i")

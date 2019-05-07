@@ -72,7 +72,7 @@ public class Ssd1306v2 implements Closeable {
     /**
      * I2C address for this peripheral when SA0 pin is connected to ground.
      */
-    public static final int I2C_ADDRESS_SA0_LOW =  0x3C;
+    public static final int I2C_ADDRESS_SA0_LOW = 0x3C;
     /**
      * I2C address for this peripheral when SA0 pin is high.
      */
@@ -141,6 +141,7 @@ public class Ssd1306v2 implements Closeable {
 
     /**
      * Create a new Ssd1306 driver connected to the named I2C bus
+     *
      * @param i2cName I2C bus name the display is connected to
      * @throws IOException
      */
@@ -151,9 +152,10 @@ public class Ssd1306v2 implements Closeable {
     /**
      * Create a new Ssd1306 driver connected to the named I2C bus
      * with the given dimensions.
+     *
      * @param i2cName I2C bus name the display is connected to
-     * @param width display width in pixels.
-     * @param height display height in pixels.
+     * @param width   display width in pixels.
+     * @param height  display height in pixels.
      * @throws IOException
      */
     public Ssd1306v2(String i2cName, int width, int height) throws IOException {
@@ -162,7 +164,8 @@ public class Ssd1306v2 implements Closeable {
 
     /**
      * Create a new Ssd1306 driver connected to the named I2C bus and address
-     * @param i2cName I2C bus name the display is connected to
+     *
+     * @param i2cName    I2C bus name the display is connected to
      * @param i2cAddress I2C address of the display
      * @throws IOException
      */
@@ -173,10 +176,11 @@ public class Ssd1306v2 implements Closeable {
     /**
      * Create a new Ssd1306 driver connected to the named I2C bus and address
      * with the given dimensions.
-     * @param i2cName I2C bus name the display is connected to
+     *
+     * @param i2cName    I2C bus name the display is connected to
      * @param i2cAddress I2C address of the display
-     * @param width display width in pixels.
-     * @param height display height in pixels.
+     * @param width      display width in pixels.
+     * @param height     display height in pixels.
      * @throws IOException
      */
     public Ssd1306v2(String i2cName, int i2cAddress, int width, int height) throws IOException {
@@ -194,6 +198,7 @@ public class Ssd1306v2 implements Closeable {
 
     /**
      * Create a new Ssd1306 driver connected to the given device
+     *
      * @param device I2C device of the display
      * @throws IOException
      */
@@ -204,6 +209,7 @@ public class Ssd1306v2 implements Closeable {
     /**
      * Recommended start sequence for initializing the communications with the OLED display.
      * WARNING: If you change this code, power cycle your display before testing.
+     *
      * @throws IOException
      */
     private void init(I2cDevice device, int width, int height) throws IOException {
@@ -258,8 +264,8 @@ public class Ssd1306v2 implements Closeable {
      * Sets a specific pixel in the display buffer to on or off. This will be rendered the next time
      * {@link #show()} is called.
      *
-     * @param x The horizontal coordinate.
-     * @param y The vertical coordinate.
+     * @param x  The horizontal coordinate.
+     * @param y  The vertical coordinate.
      * @param on Set to true to enable the pixel; false to disable the pixel.
      */
     public void setPixel(int x, int y, boolean on) throws IllegalArgumentException {
@@ -311,12 +317,12 @@ public class Ssd1306v2 implements Closeable {
         }
     }
 
-    public final void selectFont( String name) {
+    public final void selectFont(String name) {
         final FontItem[] fonts = FONTS_ARRAY;
         int index = 0;
         final int fontsCount = fonts.length;
 
-        for(int i = 0; i < fontsCount; ++i) {
+        for (int i = 0; i < fontsCount; ++i) {
             if (name.equals(fonts[i].getName())) {
                 index = i;
                 break;
@@ -326,6 +332,13 @@ public class Ssd1306v2 implements Closeable {
         actFontItemIndex = index;
     }
 
+    /**
+     * show font demo message - containing font name as first row and demo latin text
+     *
+     * @param demoFont font name
+     * @param message  demo text
+     * @throws IOException
+     */
     public final void showFontDemoScreen(final String demoFont, final String message) throws IOException {
         clearPixels();
         selectFont(Monobit16px.Companion.getFont().getName());
@@ -336,20 +349,26 @@ public class Ssd1306v2 implements Closeable {
         show();
     }
 
-    public final void showFullScreenMessage( String message) throws IOException {
+    public final void showFullScreenMessage(String message) throws IOException {
         clearPixels();
         renderGraphicsMessageCompacted3(message, 0);
         show();
     }
 
-    public final void renderGraphicsMessageCompacted3( String message, int rowOffset) {
+    /**
+     * render message characters for the selected font
+     *
+     * @param message
+     * @param rowOffset
+     */
+    public final void renderGraphicsMessageCompacted3(String message, int rowOffset) {
         int charIndex = -1;
         int rowIndex = rowOffset;
         int lastRowEndCharIndex = -1;
         int messageLength = message.length();
 
         final ArrayList<Integer> widths = new ArrayList<>(20);
-        while(charIndex < messageLength - 1 && rowIndex < 63) {
+        while (charIndex < messageLength - 1 && rowIndex < 63) {
             int pixelCount = 0;
 
             widths.clear();
@@ -375,7 +394,7 @@ public class Ssd1306v2 implements Closeable {
 //            final int width = new int[rowSize][];
 
             final ArrayList<int[]> charsDataList = new ArrayList<>(rowSize);
-            for(int i = 0; i < rowSize; ++i) {
+            for (int i = 0; i < rowSize; ++i) {
                 charsDataList.add(getFontData(charArray[i], FONT_DATA));
             }
 
@@ -386,7 +405,7 @@ public class Ssd1306v2 implements Closeable {
                 logMsg("row[" + rowIndex + ", " + startIndex + "] " + rowSize + " chars Height " + charDataHeight + "px");
 
                 // i is row index within char
-                for(int i = 0; i < charDataHeight; ++i) {
+                for (int i = 0; i < charDataHeight; ++i) {
                     final int actRowIndex = rowIndex + i;
                     if (actRowIndex > 63) {
                         break;
@@ -394,13 +413,13 @@ public class Ssd1306v2 implements Closeable {
 
                     int pos = 0;
                     final boolean[] rowPixelFlags = new boolean[128];
-                    for(int rowCharIndex = 0; rowCharIndex < charsData.length; ++rowCharIndex) {
+                    for (int rowCharIndex = 0; rowCharIndex < charsData.length; ++rowCharIndex) {
                         final int[] charData = charsData[rowCharIndex];
                         if (charData.length != 0) {
                             final int fontChar = charData[i];
                             final int charDataWidth = rowCharWidths[rowCharIndex];
 
-                            for(int k = 0; k < charDataWidth; ++k) {
+                            for (int k = 0; k < charDataWidth; ++k) {
                                 rowPixelFlags[pos + k] = (1 << (charDataWidth - k - 1) & fontChar) != 0;
                             }
 
@@ -412,7 +431,6 @@ public class Ssd1306v2 implements Closeable {
                 rowIndex += charDataHeight;
             }
         }
-
     }
 
     /**
@@ -445,6 +463,12 @@ public class Ssd1306v2 implements Closeable {
         }
     }
 
+    /**
+     * get font bytes width for the given character
+     *
+     * @param var1
+     * @return
+     */
     public final int getFontDataWidth(char var1) {
         return getFontData(var1, FONT_DATA_WIDTH)[0];
     }
@@ -455,6 +479,12 @@ public class Ssd1306v2 implements Closeable {
                 : FONTS_ARRAY[actFontItemIndex].getCharBytes()[charToFontIndex(charValue)];
     }
 
+    /**
+     * convert character into font character rendered bytes index
+     *
+     * @param charValue character to seek for
+     * @return index within rendered bytes
+     */
     private static int charToFontIndex(char charValue) {
         return charValue > 130 ? charValue - 66 : charValue - 32;
     }
@@ -476,8 +506,8 @@ public class Ssd1306v2 implements Closeable {
     /**
      * Start scrolling the display horizontally.
      *
-     * @param startY The starting row to scroll.
-     * @param finishY The ending row to scroll.
+     * @param startY     The starting row to scroll.
+     * @param finishY    The ending row to scroll.
      * @param scrollMode Configures the direction that the display contents scroll.
      * @throws IOException
      * @throws IllegalStateException
@@ -489,7 +519,7 @@ public class Ssd1306v2 implements Closeable {
         }
 
         int scrollModeVal = 0;
-        switch(scrollMode) {
+        switch (scrollMode) {
             case RightHorizontal:
                 scrollModeVal = COMMAND_RIGHT_HORIZONTAL_SCROLL;
                 break;

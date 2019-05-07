@@ -12,7 +12,7 @@ import kotlin.math.max
 /**
  *
  */
-class SpiST9720(
+class SpiST7920(
     private val mDevice: SpiDevice?
 ) {
 
@@ -479,6 +479,7 @@ class SpiST9720(
                 val rowCharWidths = widths.toTypedArray()
                 val charDataHeight = charsData[0].size
                 logMsg("row[$rowIndex, $startIndex] $rowSize chars Height ${charDataHeight}px")
+                val strBuilder = StringBuilder(128)
                 for (i in charsData[0].indices) {
                     val actRowIndex = rowIndex + i
                     if (actRowIndex > 63) {
@@ -511,11 +512,15 @@ class SpiST9720(
                         }
                         pos += charDataWidth
                     }
-                    val strBuilder = StringBuilder(128)
+                    strBuilder
+                        .append("data[").append(actRowIndex)
+                        .append(" of ").append(rowSize).append("] ")
+                        .append(charArray).append(' ');
+
                     for (pixel in rowPixels) {
                         strBuilder.append(pixel.toString())
                     }
-                    logMsg("data[$actRowIndex of $rowSize] ${String(charArray)} $strBuilder")
+                    logMsg("$strBuilder")
                     strBuilder.clear()
 
                     // write rowPixels array into graphics buffer
@@ -615,7 +620,7 @@ class SpiST9720(
     }
 
     companion object {
-        private val TAG = SpiST9720::class.java.simpleName
+        private val TAG = SpiST7920::class.java.simpleName
         private const val DATA_BYTES_SIZE = 3
         private const val SHIFT_OFFSET = 2
         private const val ROW_CHARS_16 = 16

@@ -2,7 +2,7 @@ package com.rudolas.mia.lcdst7920;
 
 import java.nio.ByteBuffer;
 
-public class ST9720v2 {
+public class ST7920v2 {
 
     private static final int DATA_BYTES_SIZE = 3;
     private static final int SHIFT_OFFSET = 2;
